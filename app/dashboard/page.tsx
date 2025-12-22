@@ -16,34 +16,95 @@ import {
 } from "lucide-react"
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart"
 import { Area, AreaChart, CartesianGrid, Pie, PieChart, Cell, XAxis, YAxis } from "recharts"
-
-// Sample data
-const revenueData = [
-  { month: "Jan", revenue: 45000, expenses: 32000 },
-  { month: "Feb", revenue: 52000, expenses: 35000 },
-  { month: "Mar", revenue: 48000, expenses: 33000 },
-  { month: "Apr", revenue: 61000, expenses: 38000 },
-  { month: "May", revenue: 55000, expenses: 36000 },
-  { month: "Jun", revenue: 67000, expenses: 41000 },
-  { month: "Jul", revenue: 72000, expenses: 43000 },
-]
-
-const expenseBreakdown = [
-  { category: "Operations", value: 32000, color: "oklch(0.42 0.19 160)" },
-  { category: "Marketing", value: 18000, color: "oklch(0.55 0.15 200)" },
-  { category: "Salaries", value: 45000, color: "oklch(0.65 0.18 150)" },
-  { category: "Technology", value: 15000, color: "oklch(0.7 0.14 50)" },
-]
-
-const recentTransactions = [
-  { id: 1, name: "Acme Corp", amount: 15000, type: "income", date: "Dec 20, 2024" },
-  { id: 2, name: "Office Supplies", amount: -450, type: "expense", date: "Dec 19, 2024" },
-  { id: 3, name: "Tech Solutions Inc", amount: 8500, type: "income", date: "Dec 18, 2024" },
-  { id: 4, name: "Marketing Campaign", amount: -3200, type: "expense", date: "Dec 17, 2024" },
-  { id: 5, name: "GlobalTech Ltd", amount: 12000, type: "income", date: "Dec 16, 2024" },
-]
+import { useDashboardStats } from "@/hooks/use-dashboard-stats"
+import { useTransactions } from "@/hooks/use-transactions"
+import { useCurrency } from "@/contexts/currency-context"
+import { formatCurrency } from "@/lib/currency"
+import { useMemo } from "react"
 
 export default function DashboardPage() {
+  const { stats, isLoading: statsLoading } = useDashboardStats()
+  const { transactions, isLoading: transactionsLoading } = useTransactions()
+  const { currency } = useCurrency()
+
+  const chartData = useMemo(() => {
+    if (!transactions.length) return { revenueData: [], expenseBreakdown: [] }
+
+    // Get last 7 months of data
+    const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+    const currentDate = new Date()
+    const revenueData = []
+
+    for (let i = 6; i >= 0; i--) {
+      const date = new Date(currentDate.getFullYear(), currentDate.getMonth() - i, 1)
+      const month = months[date.getMonth()]
+      const year = date.getFullYear()
+
+      const monthTransactions = transactions.filter((t) => {
+        const tDate = new Date(t.date)
+        return tDate.getMonth() === date.getMonth() && tDate.getFullYear() === year
+      })
+
+      const revenue = monthTransactions.filter((t) => t.type === "income").reduce((sum, t) => sum + Number(t.amount), 0)
+
+      const expenses = monthTransactions
+        .filter((t) => t.type === "expense")
+        .reduce((sum, t) => sum + Number(t.amount), 0)
+
+      revenueData.push({ month, revenue, expenses })
+    }
+
+    // Calculate expense breakdown by category
+    const expensesByCategory = transactions
+      .filter((t) => t.type === "expense")
+      .reduce(
+        (acc, t) => {
+          acc[t.category] = (acc[t.category] || 0) + Number(t.amount)
+          return acc
+        },
+        {} as Record<string, number>,
+      )
+
+    const colors = [
+      "oklch(0.42 0.19 160)",
+      "oklch(0.55 0.15 200)",
+      "oklch(0.65 0.18 150)",
+      "oklch(0.7 0.14 50)",
+      "oklch(0.6 0.12 280)",
+    ]
+
+    const expenseBreakdown = Object.entries(expensesByCategory)
+      .map(([category, value], index) => ({
+        category,
+        value,
+        color: colors[index % colors.length],
+      }))
+      .sort((a, b) => b.value - a.value)
+      .slice(0, 5)
+
+    return { revenueData, expenseBreakdown }
+  }, [transactions])
+
+  const recentTransactions = useMemo(() => {
+    return transactions.slice(0, 5)
+  }, [transactions])
+
+  if (statsLoading || transactionsLoading) {
+    return (
+      <div className="min-h-screen bg-background">
+        <DashboardNav />
+        <main className="lg:pl-64 pt-16 lg:pt-16">
+          <div className="p-6 flex items-center justify-center min-h-[400px]">
+            <div className="text-center">
+              <div className="w-8 h-8 border-4 border-accent border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+              <p className="text-muted-foreground">Loading your dashboard...</p>
+            </div>
+          </div>
+        </main>
+      </div>
+    )
+  }
+
   return (
     <div className="min-h-screen bg-background">
       <DashboardNav />
@@ -54,7 +115,7 @@ export default function DashboardPage() {
           {/* Header */}
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-3xl font-bold">Welcome back, Sarah</h1>
+              <h1 className="text-3xl font-bold">Welcome back!</h1>
               <p className="text-muted-foreground mt-1">Here's what's happening with your finances today</p>
             </div>
             <div className="hidden md:flex items-center gap-3">
@@ -74,32 +135,32 @@ export default function DashboardPage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             <StatCard
               title="Total Revenue"
-              value="$124,500"
-              change="+12.5% from last month"
-              trend="up"
+              value={formatCurrency(stats?.totalRevenue || 0, currency)}
+              change={`${stats?.revenueChange.toFixed(1)}% from last month`}
+              trend={stats?.revenueChange >= 0 ? "up" : "down"}
               icon={DollarSign}
               colorClass="from-accent/5"
             />
             <StatCard
               title="Cash Flow"
-              value="$45,200"
-              change="+8.3% increase"
-              trend="up"
+              value={formatCurrency(stats?.cashFlow || 0, currency)}
+              change={`${Math.abs(stats?.cashFlowChange || 0).toFixed(1)}% ${stats?.cashFlowChange >= 0 ? "increase" : "decrease"}`}
+              trend={stats?.cashFlowChange >= 0 ? "up" : "down"}
               icon={TrendingUp}
               colorClass="from-success/5"
             />
             <StatCard
               title="Expenses"
-              value="$79,300"
-              change="-5.2% from last month"
-              trend="down"
+              value={formatCurrency(stats?.totalExpenses || 0, currency)}
+              change={`${Math.abs(stats?.expensesChange || 0).toFixed(1)}% from last month`}
+              trend={stats?.expensesChange >= 0 ? "up" : "down"}
               icon={Wallet}
               colorClass="from-chart-4/5"
             />
             <StatCard
               title="Outstanding"
-              value="$18,900"
-              change="7 pending invoices"
+              value={formatCurrency(stats?.outstanding || 0, currency)}
+              change={`${stats?.outstandingCount || 0} pending invoices`}
               trend="up"
               icon={CreditCard}
               colorClass="from-chart-2/5"
@@ -113,7 +174,7 @@ export default function DashboardPage() {
               <div className="flex items-center justify-between mb-6">
                 <div>
                   <h3 className="text-lg font-semibold">Revenue vs Expenses</h3>
-                  <p className="text-sm text-muted-foreground mt-1">Monthly comparison for 2024</p>
+                  <p className="text-sm text-muted-foreground mt-1">Last 7 months comparison</p>
                 </div>
                 <Button variant="ghost" size="icon">
                   <MoreVertical className="w-5 h-5" />
@@ -132,7 +193,7 @@ export default function DashboardPage() {
                 }}
                 className="h-[300px]"
               >
-                <AreaChart data={revenueData}>
+                <AreaChart data={chartData.revenueData}>
                   <defs>
                     <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
                       <stop offset="5%" stopColor="oklch(0.42 0.19 160)" stopOpacity={0.3} />
@@ -172,58 +233,53 @@ export default function DashboardPage() {
               <div className="flex items-center justify-between mb-6">
                 <div>
                   <h3 className="text-lg font-semibold">Expense Breakdown</h3>
-                  <p className="text-sm text-muted-foreground mt-1">Current month distribution</p>
+                  <p className="text-sm text-muted-foreground mt-1">By category</p>
                 </div>
               </div>
-              <ChartContainer
-                config={{
-                  operations: {
-                    label: "Operations",
-                    color: "oklch(0.42 0.19 160)",
-                  },
-                  marketing: {
-                    label: "Marketing",
-                    color: "oklch(0.55 0.15 200)",
-                  },
-                  salaries: {
-                    label: "Salaries",
-                    color: "oklch(0.65 0.18 150)",
-                  },
-                  technology: {
-                    label: "Technology",
-                    color: "oklch(0.7 0.14 50)",
-                  },
-                }}
-                className="h-[240px]"
-              >
-                <PieChart>
-                  <Pie
-                    data={expenseBreakdown}
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={60}
-                    outerRadius={90}
-                    paddingAngle={4}
-                    dataKey="value"
+              {chartData.expenseBreakdown.length > 0 ? (
+                <>
+                  <ChartContainer
+                    config={{
+                      value: {
+                        label: "Amount",
+                      },
+                    }}
+                    className="h-[240px]"
                   >
-                    {expenseBreakdown.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.color} />
+                    <PieChart>
+                      <Pie
+                        data={chartData.expenseBreakdown}
+                        cx="50%"
+                        cy="50%"
+                        innerRadius={60}
+                        outerRadius={90}
+                        paddingAngle={4}
+                        dataKey="value"
+                      >
+                        {chartData.expenseBreakdown.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={entry.color} />
+                        ))}
+                      </Pie>
+                      <ChartTooltip content={<ChartTooltipContent />} />
+                    </PieChart>
+                  </ChartContainer>
+                  <div className="mt-6 space-y-3">
+                    {chartData.expenseBreakdown.map((item, i) => (
+                      <div key={i} className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <div className="w-3 h-3 rounded-full" style={{ backgroundColor: item.color }} />
+                          <span className="text-sm">{item.category}</span>
+                        </div>
+                        <span className="text-sm font-medium">{formatCurrency(item.value, currency)}</span>
+                      </div>
                     ))}
-                  </Pie>
-                  <ChartTooltip content={<ChartTooltipContent />} />
-                </PieChart>
-              </ChartContainer>
-              <div className="mt-6 space-y-3">
-                {expenseBreakdown.map((item, i) => (
-                  <div key={i} className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <div className="w-3 h-3 rounded-full" style={{ backgroundColor: item.color }} />
-                      <span className="text-sm">{item.category}</span>
-                    </div>
-                    <span className="text-sm font-medium">${item.value.toLocaleString()}</span>
                   </div>
-                ))}
-              </div>
+                </>
+              ) : (
+                <div className="h-[300px] flex items-center justify-center text-muted-foreground">
+                  No expense data available
+                </div>
+              )}
             </Card>
           </div>
 
@@ -234,40 +290,51 @@ export default function DashboardPage() {
                 <h3 className="text-lg font-semibold">Recent Transactions</h3>
                 <p className="text-sm text-muted-foreground mt-1">Your latest financial activity</p>
               </div>
-              <Button variant="outline" size="sm">
+              <Button variant="outline" size="sm" onClick={() => (window.location.href = "/dashboard/transactions")}>
                 View All
               </Button>
             </div>
-            <div className="space-y-4">
-              {recentTransactions.map((transaction) => (
-                <div key={transaction.id} className="flex items-center justify-between py-3 border-b last:border-0">
-                  <div className="flex items-center gap-4">
-                    <div
-                      className={`w-10 h-10 rounded-lg flex items-center justify-center ${
-                        transaction.type === "income" ? "bg-success/10" : "bg-muted"
+            {recentTransactions.length > 0 ? (
+              <div className="space-y-4">
+                {recentTransactions.map((transaction) => (
+                  <div key={transaction.id} className="flex items-center justify-between py-3 border-b last:border-0">
+                    <div className="flex items-center gap-4">
+                      <div
+                        className={`w-10 h-10 rounded-lg flex items-center justify-center ${
+                          transaction.type === "income" ? "bg-success/10" : "bg-muted"
+                        }`}
+                      >
+                        {transaction.type === "income" ? (
+                          <ArrowUpRight className="w-5 h-5 text-success" />
+                        ) : (
+                          <ArrowDownRight className="w-5 h-5 text-muted-foreground" />
+                        )}
+                      </div>
+                      <div>
+                        <p className="font-medium">{transaction.name}</p>
+                        <p className="text-sm text-muted-foreground">
+                          {new Date(transaction.date).toLocaleDateString("en-US", {
+                            month: "short",
+                            day: "numeric",
+                            year: "numeric",
+                          })}
+                        </p>
+                      </div>
+                    </div>
+                    <span
+                      className={`text-lg font-semibold ${
+                        transaction.type === "income" ? "text-success" : "text-foreground"
                       }`}
                     >
-                      {transaction.type === "income" ? (
-                        <ArrowUpRight className="w-5 h-5 text-success" />
-                      ) : (
-                        <ArrowDownRight className="w-5 h-5 text-muted-foreground" />
-                      )}
-                    </div>
-                    <div>
-                      <p className="font-medium">{transaction.name}</p>
-                      <p className="text-sm text-muted-foreground">{transaction.date}</p>
-                    </div>
+                      {transaction.type === "income" ? "+" : "-"}
+                      {formatCurrency(Math.abs(Number(transaction.amount)), currency)}
+                    </span>
                   </div>
-                  <span
-                    className={`text-lg font-semibold ${
-                      transaction.type === "income" ? "text-success" : "text-foreground"
-                    }`}
-                  >
-                    {transaction.type === "income" ? "+" : ""}${Math.abs(transaction.amount).toLocaleString()}
-                  </span>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            ) : (
+              <div className="py-12 text-center text-muted-foreground">No transactions yet</div>
+            )}
           </Card>
         </div>
       </main>

@@ -22,6 +22,7 @@ export default function SignupPage() {
     company: "",
     email: "",
     password: "",
+    currency: "USD" as "USD" | "INR",
     terms: false,
   })
 
@@ -29,8 +30,6 @@ export default function SignupPage() {
     e.preventDefault()
     setError(null)
     setLoading(true)
-
-    console.log("[v0] Starting signup process", { email: formData.email })
 
     try {
       const supabase = getSupabaseBrowserClient()
@@ -42,11 +41,10 @@ export default function SignupPage() {
           data: {
             full_name: formData.name,
             company_name: formData.company,
+            currency: formData.currency,
           },
         },
       })
-
-      console.log("[v0] Signup response", { data, error: signUpError })
 
       if (signUpError) {
         setError(signUpError.message)
@@ -55,11 +53,9 @@ export default function SignupPage() {
       }
 
       if (data.user && data.session) {
-        // User is auto-confirmed, redirect to dashboard
         router.push("/dashboard")
         router.refresh()
       } else if (data.user && !data.session) {
-        // Email confirmation required
         setError("Please check your email to confirm your account before signing in.")
         setLoading(false)
       }
@@ -175,6 +171,21 @@ export default function SignupPage() {
                 </button>
               </div>
               <p className="text-xs text-muted-foreground">Must be at least 8 characters</p>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="currency" className="text-sm font-medium">
+                Preferred Currency
+              </Label>
+              <select
+                id="currency"
+                className="w-full h-11 rounded-lg border border-input bg-background/50 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-accent"
+                value={formData.currency}
+                onChange={(e) => setFormData({ ...formData, currency: e.target.value as "USD" | "INR" })}
+              >
+                <option value="USD">$ US Dollar (USD)</option>
+                <option value="INR">₹ Indian Rupee (INR)</option>
+              </select>
             </div>
 
             <div className="flex items-start gap-2 pt-2">
