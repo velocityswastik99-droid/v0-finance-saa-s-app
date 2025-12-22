@@ -21,11 +21,13 @@ import { useTransactions } from "@/hooks/use-transactions"
 import { useCurrency } from "@/contexts/currency-context"
 import { formatCurrency } from "@/lib/currency"
 import { useMemo } from "react"
+import { useUser } from "@/hooks/use-user"
 
 export default function DashboardPage() {
   const { stats, isLoading: statsLoading } = useDashboardStats()
   const { transactions, isLoading: transactionsLoading } = useTransactions()
   const { currency } = useCurrency()
+  const { profile } = useUser()
 
   const chartData = useMemo(() => {
     if (!transactions.length) return { revenueData: [], expenseBreakdown: [] }
@@ -115,7 +117,9 @@ export default function DashboardPage() {
           {/* Header */}
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-3xl font-bold">Welcome back!</h1>
+              <h1 className="text-3xl font-bold">
+                {profile?.full_name ? `Welcome back, ${profile.full_name.split(" ")[0]}!` : "Welcome back!"}
+              </h1>
               <p className="text-muted-foreground mt-1">Here's what's happening with your finances today</p>
             </div>
             <div className="hidden md:flex items-center gap-3">
@@ -266,7 +270,7 @@ export default function DashboardPage() {
                   <div className="mt-6 space-y-3">
                     {chartData.expenseBreakdown.map((item, i) => (
                       <div key={i} className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-4">
                           <div className="w-3 h-3 rounded-full" style={{ backgroundColor: item.color }} />
                           <span className="text-sm">{item.category}</span>
                         </div>

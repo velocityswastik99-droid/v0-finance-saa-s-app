@@ -1,7 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import { usePathname } from "next/navigation"
+import { usePathname, useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import {
   DollarSign,
@@ -16,9 +16,14 @@ import {
   LogOut,
   Menu,
   X,
+  Moon,
+  Sun,
 } from "lucide-react"
 import { useState } from "react"
 import { cn } from "@/lib/utils"
+import { useTheme } from "@/contexts/theme-context"
+import { useUser } from "@/hooks/use-user"
+import { useCurrency } from "@/contexts/currency-context"
 
 const navigation = [
   { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
@@ -30,7 +35,28 @@ const navigation = [
 
 export function DashboardNav() {
   const pathname = usePathname()
+  const router = useRouter()
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const { theme, toggleTheme } = useTheme()
+  const { profile, signOut } = useUser()
+  const { currency, setCurrency } = useCurrency()
+
+  const handleSignOut = async () => {
+    try {
+      await signOut()
+    } catch (error) {
+      console.error("Error signing out:", error)
+    }
+  }
+
+  const handleCurrencyToggle = async () => {
+    try {
+      const newCurrency = currency === "USD" ? "INR" : "USD"
+      await setCurrency(newCurrency)
+    } catch (error) {
+      console.error("Error changing currency:", error)
+    }
+  }
 
   return (
     <>
@@ -63,6 +89,13 @@ export function DashboardNav() {
           })}
         </nav>
         <div className="border-t p-3 space-y-1">
+          <button
+            onClick={handleCurrencyToggle}
+            className="w-full flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-muted-foreground hover:bg-accent/50 hover:text-foreground transition-colors"
+          >
+            <DollarSign className="w-5 h-5" />
+            Currency: {currency}
+          </button>
           <Link
             href="/dashboard/settings"
             className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-muted-foreground hover:bg-accent/50 hover:text-foreground transition-colors"
@@ -70,7 +103,10 @@ export function DashboardNav() {
             <Settings className="w-5 h-5" />
             Settings
           </Link>
-          <button className="w-full flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-muted-foreground hover:bg-accent/50 hover:text-foreground transition-colors">
+          <button
+            onClick={handleSignOut}
+            className="w-full flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-muted-foreground hover:bg-accent/50 hover:text-foreground transition-colors"
+          >
             <LogOut className="w-5 h-5" />
             Sign Out
           </button>
@@ -87,6 +123,9 @@ export function DashboardNav() {
             <span className="text-xl font-semibold">Finflow</span>
           </div>
           <div className="flex items-center gap-2">
+            <Button variant="ghost" size="icon" onClick={toggleTheme}>
+              {theme === "light" ? <Moon className="w-5 h-5" /> : <Sun className="w-5 h-5" />}
+            </Button>
             <Button variant="ghost" size="icon">
               <Bell className="w-5 h-5" />
             </Button>
@@ -120,6 +159,16 @@ export function DashboardNav() {
                 </Link>
               )
             })}
+            <button
+              onClick={() => {
+                handleCurrencyToggle()
+                setMobileMenuOpen(false)
+              }}
+              className="flex items-center gap-3 rounded-lg px-4 py-3 text-base font-medium text-muted-foreground hover:bg-accent/50 hover:text-foreground transition-colors"
+            >
+              <DollarSign className="w-5 h-5" />
+              Currency: {currency}
+            </button>
             <Link
               href="/dashboard/settings"
               onClick={() => setMobileMenuOpen(false)}
@@ -128,6 +177,16 @@ export function DashboardNav() {
               <Settings className="w-5 h-5" />
               Settings
             </Link>
+            <button
+              onClick={() => {
+                handleSignOut()
+                setMobileMenuOpen(false)
+              }}
+              className="w-full flex items-center gap-3 rounded-lg px-4 py-3 text-base font-medium text-muted-foreground hover:bg-accent/50 hover:text-foreground transition-colors"
+            >
+              <LogOut className="w-5 h-5" />
+              Sign Out
+            </button>
           </nav>
         </div>
       )}
@@ -136,9 +195,14 @@ export function DashboardNav() {
       <header className="hidden lg:block fixed top-0 left-64 right-0 z-40 h-16 border-b bg-background/95 backdrop-blur-sm">
         <div className="flex items-center justify-between h-full px-6">
           <div>
-            <h2 className="text-lg font-semibold">Dashboard</h2>
+            <h2 className="text-lg font-semibold">
+              {profile?.full_name ? `Welcome, ${profile.full_name.split(" ")[0]}!` : "Dashboard"}
+            </h2>
           </div>
           <div className="flex items-center gap-3">
+            <Button variant="ghost" size="icon" onClick={toggleTheme}>
+              {theme === "light" ? <Moon className="w-5 h-5" /> : <Sun className="w-5 h-5" />}
+            </Button>
             <Button variant="ghost" size="icon">
               <Bell className="w-5 h-5" />
             </Button>

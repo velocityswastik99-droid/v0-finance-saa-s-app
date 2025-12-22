@@ -1,12 +1,12 @@
 "use client"
 
 import useSWR from "swr"
-import { createBrowserClient } from "@/lib/supabase/client"
+import { getSupabaseBrowserClient } from "@/lib/supabase/client"
 import type { Budget } from "@/lib/supabase/types"
 import { useEffect } from "react"
 
 export function useBudgets() {
-  const supabase = createBrowserClient()
+  const supabase = getSupabaseBrowserClient()
 
   const { data, error, isLoading, mutate } = useSWR<Budget[]>("budgets", async () => {
     const {
