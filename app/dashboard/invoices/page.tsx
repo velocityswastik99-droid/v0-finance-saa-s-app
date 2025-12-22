@@ -8,7 +8,8 @@ import { useInvoices } from "@/hooks/use-invoices"
 import { useCurrency } from "@/contexts/currency-context"
 import { formatCurrency } from "@/lib/currency"
 import { useState } from "react"
-import { Search, Plus, Download, FileText, Send, Clock, CheckCircle2, AlertCircle, Loader2 } from "lucide-react"
+import { Search, Download, FileText, Send, Clock, CheckCircle2, AlertCircle, Loader2 } from "lucide-react"
+import { AddInvoiceDialog } from "@/components/add-invoice-dialog"
 
 const getStatusStyle = (status: string) => {
   switch (status) {
@@ -92,10 +93,7 @@ export default function InvoicesPage() {
               <h1 className="text-3xl font-bold">Invoices</h1>
               <p className="text-muted-foreground mt-1">Create and manage customer invoices</p>
             </div>
-            <Button className="gap-2 rounded-full">
-              <Plus className="w-4 h-4" />
-              Create Invoice
-            </Button>
+            <AddInvoiceDialog />
           </div>
 
           {/* Stats */}
@@ -139,10 +137,7 @@ export default function InvoicesPage() {
                 <FileText className="w-12 h-12 text-muted-foreground mb-3" />
                 <p className="text-lg font-medium mb-1">No invoices found</p>
                 <p className="text-sm text-muted-foreground mb-4">Create your first invoice to get started</p>
-                <Button className="gap-2 rounded-full">
-                  <Plus className="w-4 h-4" />
-                  Create Invoice
-                </Button>
+                <AddInvoiceDialog />
               </div>
             </Card>
           ) : (

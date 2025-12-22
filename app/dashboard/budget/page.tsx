@@ -2,12 +2,12 @@
 
 import { DashboardNav } from "@/components/dashboard-nav"
 import { Card } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
 import { Progress } from "@/components/ui/progress"
 import { useBudgets } from "@/hooks/use-budgets"
 import { useCurrency } from "@/contexts/currency-context"
 import { formatCurrency } from "@/lib/currency"
-import { Plus, TrendingUp, AlertCircle, CheckCircle2, Loader2 } from "lucide-react"
+import { TrendingUp, AlertCircle, CheckCircle2, Loader2 } from "lucide-react"
+import { AddBudgetDialog } from "@/components/add-budget-dialog"
 
 export default function BudgetPage() {
   const { budgets, isLoading } = useBudgets()
@@ -29,10 +29,7 @@ export default function BudgetPage() {
               <h1 className="text-3xl font-bold">Budget Planning</h1>
               <p className="text-muted-foreground mt-1">Track and manage your spending against budgets</p>
             </div>
-            <Button className="gap-2 rounded-full">
-              <Plus className="w-4 h-4" />
-              Create Budget
-            </Button>
+            <AddBudgetDialog />
           </div>
 
           {/* Overview */}
@@ -87,10 +84,7 @@ export default function BudgetPage() {
                 <p className="text-sm text-muted-foreground mb-4">
                   Create your first budget to start tracking spending
                 </p>
-                <Button className="gap-2 rounded-full">
-                  <Plus className="w-4 h-4" />
-                  Create Budget
-                </Button>
+                <AddBudgetDialog />
               </div>
             </Card>
           ) : (

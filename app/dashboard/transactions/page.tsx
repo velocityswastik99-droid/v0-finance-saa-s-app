@@ -13,7 +13,6 @@ import {
   ArrowDownRight,
   Search,
   Filter,
-  Plus,
   Download,
   Calendar,
   TrendingUp,
@@ -21,6 +20,7 @@ import {
   Receipt,
   Loader2,
 } from "lucide-react"
+import { AddTransactionDialog } from "@/components/add-transaction-dialog"
 
 export default function TransactionsPage() {
   const { transactions, isLoading } = useTransactions()
@@ -73,10 +73,7 @@ export default function TransactionsPage() {
                 <Download className="w-4 h-4" />
                 Export
               </Button>
-              <Button className="gap-2 rounded-full">
-                <Plus className="w-4 h-4" />
-                Add Transaction
-              </Button>
+              <AddTransactionDialog />
             </div>
           </div>
 
