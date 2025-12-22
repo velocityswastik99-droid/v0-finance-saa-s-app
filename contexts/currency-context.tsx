@@ -66,8 +66,13 @@ export function CurrencyProvider({ children }: { children: ReactNode }) {
 
 export function useCurrency() {
   const context = useContext(CurrencyContext)
+  // Return default values during SSR instead of throwing
   if (!context) {
-    throw new Error("useCurrency must be used within CurrencyProvider")
+    return {
+      currency: "USD" as CurrencyCode,
+      setCurrency: async () => {},
+      isLoading: false,
+    }
   }
   return context
 }

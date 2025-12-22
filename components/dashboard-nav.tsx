@@ -16,12 +16,9 @@ import {
   LogOut,
   Menu,
   X,
-  Moon,
-  Sun,
 } from "lucide-react"
 import { useState } from "react"
 import { cn } from "@/lib/utils"
-import { useTheme } from "@/contexts/theme-context"
 import { useUser } from "@/hooks/use-user"
 import { useCurrency } from "@/contexts/currency-context"
 
@@ -37,7 +34,6 @@ export function DashboardNav() {
   const pathname = usePathname()
   const router = useRouter()
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
-  const { theme, toggleTheme } = useTheme()
   const { profile, signOut } = useUser()
   const { currency, setCurrency } = useCurrency()
 
@@ -123,9 +119,6 @@ export function DashboardNav() {
             <span className="text-xl font-semibold">Finflow</span>
           </div>
           <div className="flex items-center gap-2">
-            <Button variant="ghost" size="icon" onClick={toggleTheme}>
-              {theme === "light" ? <Moon className="w-5 h-5" /> : <Sun className="w-5 h-5" />}
-            </Button>
             <Button variant="ghost" size="icon">
               <Bell className="w-5 h-5" />
             </Button>
@@ -200,9 +193,6 @@ export function DashboardNav() {
             </h2>
           </div>
           <div className="flex items-center gap-3">
-            <Button variant="ghost" size="icon" onClick={toggleTheme}>
-              {theme === "light" ? <Moon className="w-5 h-5" /> : <Sun className="w-5 h-5" />}
-            </Button>
             <Button variant="ghost" size="icon">
               <Bell className="w-5 h-5" />
             </Button>
