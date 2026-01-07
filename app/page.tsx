@@ -4,47 +4,58 @@ import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Shield, TrendingUp, Zap, Lock, BarChart3, DollarSign, CheckCircle2, Star, ArrowRight } from "lucide-react"
-
 import React, { useEffect } from "react";
 
 export default function LandingPage() {
   useEffect(() => {
-    const Init = async () => {
-      const ssJS = await import("@sixthsense/sixthsense-javascript-agent");
-      console.log(ssJS)
-      ssJS.default.register({
-        service: "FINANCE-APP", // Name the app
-        collector: 'https://http-collector-observability.sixthsense.rakuten.com/oap/',
-        pagePath: "index.html",
-        serviceVersion: "1.2.1",
-        enableSPA: true,
-        useFmp: true,
-        autoTracePerf: true,
-        enableDirectFetchPatching: false,
-        detailMode: true,
-        environment: "testing",
-        authorization: "eyJhbGciOiJIUzI1NiJ9.eyJiaWxsaW5nX2lkIjoiMTUwNzNkZWYtNDhlZC00M2UwLTg0ODUtMjkyOTIzYzRiOTdiIiwidGVhbUlkIjoiY2RiMTM2ZTMtMjRhYi00N2VmLWIyYjAtYzZkY2U0YmFiNGQ2IiwiYXVkIjoib2FwIiwiaXNzIjoic2l4dGgtc2Vucy1hdXRoIiwiaWF0IjoxNzYzOTcxODUxfQ.kNyuahPftkOKjq6XIHVK6QKY9e40T4FF1UlyWzSvWiQ", // Get the Access Token from SixthSense UI
-        maxBreadcrumbs: 20,
-        skipURLs: [],
-        autoBreadcrumbs: {
-          xhr: false,
-          console: true,
-          dom: true,
-          location: true
-          }
-         });
-        ssJS.default.setPerformance({
+    const initializeSixthSense = async () => {
+      // Skip in development to avoid CORS issues
+      if (process.env.NODE_ENV !== 'production') {
+        console.log('SixthSense disabled in development');
+        return;
+      }
+
+      try {
+        const ssJS = await import("@sixthsense/sixthsense-javascript-agent");
+        
+        ssJS.default.register({
           service: "FINANCE-APP",
-            collector: 'https://http-collector-observability.sixthsense.rakuten.com/oap',
-                serviceVersion: "1.2.1",
-                perfInterval: 1000,
-                useFmp: true,                 
-                authorization: "eyJhbGciOiJIUzI1NiJ9.eyJiaWxsaW5nX2lkIjoiMTUwNzNkZWYtNDhlZC00M2UwLTg0ODUtMjkyOTIzYzRiOTdiIiwidGVhbUlkIjoiY2RiMTM2ZTMtMjRhYi00N2VmLWIyYjAtYzZkY2U0YmFiNGQ2IiwiYXVkIjoib2FwIiwiaXNzIjoic2l4dGgtc2Vucy1hdXRoIiwiaWF0IjoxNzYzOTcxODUxfQ.kNyuahPftkOKjq6XIHVK6QKY9e40T4FF1UlyWzSvWiQ", // Get the Access Token from SixthSense UI
-               });
-  };
-// Call the function to trigger the agent
-  Init();
-}, []);
+          collector: 'https://http-collector-observability.sixthsense.rakuten.com/oap/',
+          pagePath: window.location.pathname,
+          serviceVersion: "1.2.1",
+          enableSPA: true,
+          useFmp: true,
+          autoTracePerf: true,
+          enableDirectFetchPatching: false,
+          detailMode: true,
+          environment: "production",
+          authorization: process.env.NEXT_PUBLIC_SIXTHSENSE_TOKEN || "YOUR_TOKEN",
+          maxBreadcrumbs: 20,
+          skipURLs: [],
+          autoBreadcrumbs: {
+            xhr: false,
+            console: true,
+            dom: true,
+            location: true
+          }
+        });
+        
+        console.log('SixthSense initialized successfully');
+      } catch (error) {
+        console.warn('Failed to initialize SixthSense:', error);
+        // Non-blocking error - app should continue working
+      }
+    };
+
+    // Add a small delay to ensure page is loaded
+    const timer = setTimeout(() => {
+      initializeSixthSense();
+    }, 1000);
+
+    return () => clearTimeout(timer);
+  }, []);
+
+  // Rest of your component remains the same...
 
   return (
     <div className="min-h-screen">
