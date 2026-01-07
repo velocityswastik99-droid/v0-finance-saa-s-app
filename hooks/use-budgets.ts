@@ -1,9 +1,9 @@
 "use client"
 
 import useSWR from "swr"
+import { useEffect } from "react"
 import { getSupabaseBrowserClient } from "@/lib/supabase/client"
 import type { Budget } from "@/lib/supabase/types"
-import { useEffect } from "react"
 
 export function useBudgets() {
   const supabase = getSupabaseBrowserClient()
@@ -12,6 +12,7 @@ export function useBudgets() {
     const {
       data: { user },
     } = await supabase.auth.getUser()
+
     if (!user) throw new Error("Not authenticated")
 
     const { data, error } = await supabase
@@ -21,10 +22,9 @@ export function useBudgets() {
       .order("category", { ascending: true })
 
     if (error) throw error
-    return data
+    return data ?? []
   })
 
-  // Real-time subscription
   useEffect(() => {
     const channel = supabase
       .channel("budgets-changes")
@@ -35,9 +35,7 @@ export function useBudgets() {
           schema: "public",
           table: "budgets",
         },
-        () => {
-          mutate()
-        },
+        () => mutate()
       )
       .subscribe()
 
@@ -47,9 +45,8 @@ export function useBudgets() {
   }, [supabase, mutate])
 
   return {
-    budgets: data,
+    budgets: data ?? [],
     isLoading,
     error,
-    mutate,
   }
 }

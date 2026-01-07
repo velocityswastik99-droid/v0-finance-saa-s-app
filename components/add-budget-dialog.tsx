@@ -24,33 +24,47 @@ export function AddBudgetDialog() {
   const [loading, setLoading] = useState(false)
   const router = useRouter()
 
-  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault()
-    setLoading(true)
+async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+  e.preventDefault()
+  setLoading(true)
 
-    const formData = new FormData(e.currentTarget)
-    const supabase = getSupabaseBrowserClient()
+  const formData = new FormData(e.currentTarget)
+  const supabase = getSupabaseBrowserClient()
 
-    const {
-      data: { user },
-    } = await supabase.auth.getUser()
-    if (!user) return
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
 
-    const { error } = await supabase.from("budgets").insert({
-      user_id: user.id,
-      category: formData.get("category") as string,
-      budget_limit: Number.parseFloat(formData.get("budget_limit") as string),
-      spent: 0,
-      period: formData.get("period") as string,
-    })
-
+  if (!user) {
     setLoading(false)
-
-    if (!error) {
-      setOpen(false)
-      router.refresh()
-    }
+    return
   }
+
+  // Calculate monthly range
+  const now = new Date()
+  const startDate = new Date(now.getFullYear(), now.getMonth(), 1)
+  const endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0)
+
+  const { error } = await supabase.from("budgets").insert({
+    user_id: user.id,
+    category: formData.get("category") as string,
+    amount: Number(formData.get("budget_limit")), // ✅ correct column
+    period: formData.get("period") as string,     // "monthly"
+    start_date: startDate.toISOString().split("T")[0],
+    end_date: endDate.toISOString().split("T")[0],
+  })
+
+  setLoading(false)
+
+  if (!error) {
+    setOpen(false)
+    router.refresh()
+  } else {
+    console.error("Insert budget error:", error)
+  }
+  // console.log("Budget row:", budget)
+
+}
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
