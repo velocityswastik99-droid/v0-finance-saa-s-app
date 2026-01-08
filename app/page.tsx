@@ -4,32 +4,28 @@ import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Shield, TrendingUp, Zap, Lock, BarChart3, DollarSign, CheckCircle2, Star, ArrowRight } from "lucide-react"
-import React, { useEffect } from "react";
+import React, { useEffect } from "react"
 
-export default function LandingPage() {
+export default function HomePage() {
   useEffect(() => {
-    const initializeSixthSense = async () => {
-      // Skip in development to avoid CORS issues
-      if (process.env.NODE_ENV !== 'production') {
-        console.log('SixthSense disabled in development');
-        return;
-      }
-
+    const initSixthSense = async () => {
       try {
-        const ssJS = await import("@sixthsense/sixthsense-javascript-agent");
+        const ssJS = await import("@sixthsense/sixthsense-javascript-agent")
+        console.log("SixthSense initialized:", ssJS)
         
+        // Register the agent
         ssJS.default.register({
           service: "FINANCE-APP",
           collector: 'https://http-collector-observability.sixthsense.rakuten.com/oap/',
-          pagePath: window.location.pathname,
+          pagePath: "index.html",
           serviceVersion: "1.2.1",
           enableSPA: true,
           useFmp: true,
           autoTracePerf: true,
           enableDirectFetchPatching: false,
           detailMode: true,
-          environment: "production",
-          authorization: process.env.NEXT_PUBLIC_SIXTHSENSE_TOKEN || "YOUR_TOKEN",
+          environment: "testing",
+          authorization: "eyJhbGciOiJIUzI1NiJ9.eyJiaWxsaW5nX2lkIjoiMTUwNzNkZWYtNDhlZC00M2UwLTg0ODUtMjkyOTIzYzRiOTdiIiwidGVhbUlkIjoiY2RiMTM2ZTMtMjRhYi00N2VmLWIyYjAtYzZkY2U0YmFiNGQ2IiwiYXVkIjoib2FwIiwiaXNzIjoic2l4dGgtc2Vucy1hdXRoIiwiaWF0IjoxNzYzOTcxODUxfQ.kNyuahPftkOKjq6XIHVK6QKY9e40T4FF1UlyWzSvWiQ", // Get the Access Token from SixthSense UI
           maxBreadcrumbs: 20,
           skipURLs: [],
           autoBreadcrumbs: {
@@ -38,24 +34,24 @@ export default function LandingPage() {
             dom: true,
             location: true
           }
-        });
+        })
         
-        console.log('SixthSense initialized successfully');
+        // Set performance monitoring
+        ssJS.default.setPerformance({
+          service: "FINANCE-APP",
+          collector: 'https://http-collector-observability.sixthsense.rakuten.com/oap',
+          serviceVersion: "1.2.1",
+          perfInterval: 1000,
+          useFmp: true,
+          authorization: "eyJhbGciOiJIUzI1NiJ9.eyJiaWxsaW5nX2lkIjoiMTUwNzNkZWYtNDhlZC00M2UwLTg0ODUtMjkyOTIzYzRiOTdiIiwidGVhbUlkIjoiY2RiMTM2ZTMtMjRhYi00N2VmLWIyYjAtYzZkY2U0YmFiNGQ2IiwiYXVkIjoib2FwIiwiaXNzIjoic2l4dGgtc2Vucy1hdXRoIiwiaWF0IjoxNzYzOTcxODUxfQ.kNyuahPftkOKjq6XIHVK6QKY9e40T4FF1UlyWzSvWiQ", // Get the Access Token from SixthSense UI
+        })
       } catch (error) {
-        console.warn('Failed to initialize SixthSense:', error);
-        // Non-blocking error - app should continue working
+        console.error("Failed to initialize SixthSense:", error)
       }
-    };
+    }
 
-    // Add a small delay to ensure page is loaded
-    const timer = setTimeout(() => {
-      initializeSixthSense();
-    }, 1000);
-
-    return () => clearTimeout(timer);
-  }, []);
-
-  // Rest of your component remains the same...
+    initSixthSense()
+  }, [])
 
   return (
     <div className="min-h-screen">
@@ -70,13 +66,22 @@ export default function LandingPage() {
               <span className="text-xl font-semibold">Finflow</span>
             </div>
             <div className="hidden md:flex items-center gap-8">
-              <Link href="#features" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+              <Link 
+                href="#features" 
+                className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+              >
                 Features
               </Link>
-              <Link href="#pricing" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+              <Link 
+                href="#pricing" 
+                className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+              >
                 Pricing
               </Link>
-              <Link href="#about" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+              <Link 
+                href="#about" 
+                className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+              >
                 About
               </Link>
             </div>
@@ -114,7 +119,12 @@ export default function LandingPage() {
                   <ArrowRight className="ml-2 w-4 h-4" />
                 </Link>
               </Button>
-              <Button size="lg" variant="outline" className="rounded-full h-12 px-8 text-base bg-transparent" asChild>
+              <Button 
+                size="lg" 
+                variant="outline" 
+                className="rounded-full h-12 px-8 text-base bg-transparent" 
+                asChild
+              >
                 <Link href="/demo">View Demo</Link>
               </Button>
             </div>
@@ -167,7 +177,9 @@ export default function LandingPage() {
       <section id="features" className="py-20 px-6">
         <div className="max-w-7xl mx-auto">
           <div className="text-center max-w-3xl mx-auto mb-16">
-            <h2 className="text-4xl md:text-5xl font-bold mb-4 text-balance">Everything you need to manage finances</h2>
+            <h2 className="text-4xl md:text-5xl font-bold mb-4 text-balance">
+              Everything you need to manage finances
+            </h2>
             <p className="text-lg text-muted-foreground text-pretty">
               Powerful features designed for modern businesses and finance teams
             </p>
@@ -178,8 +190,7 @@ export default function LandingPage() {
               {
                 icon: BarChart3,
                 title: "Real-time Analytics",
-                description:
-                  "Track your financial metrics in real-time with interactive dashboards and detailed reports",
+                description: "Track your financial metrics in real-time with interactive dashboards and detailed reports",
               },
               {
                 icon: Shield,
@@ -243,7 +254,9 @@ export default function LandingPage() {
       <section className="py-20 px-6">
         <div className="max-w-7xl mx-auto">
           <div className="text-center max-w-3xl mx-auto mb-16">
-            <h2 className="text-4xl md:text-5xl font-bold mb-4 text-balance">Trusted by finance teams worldwide</h2>
+            <h2 className="text-4xl md:text-5xl font-bold mb-4 text-balance">
+              Trusted by finance teams worldwide
+            </h2>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -251,8 +264,7 @@ export default function LandingPage() {
               {
                 name: "Sarah Chen",
                 role: "CFO at TechCorp",
-                content:
-                  "Finflow transformed how we handle our finances. The real-time insights are invaluable for making quick decisions.",
+                content: "Finflow transformed how we handle our finances. The real-time insights are invaluable for making quick decisions.",
                 rating: 5,
               },
               {
@@ -289,8 +301,12 @@ export default function LandingPage() {
       <section id="pricing" className="py-20 px-6 bg-muted/30">
         <div className="max-w-7xl mx-auto">
           <div className="text-center max-w-3xl mx-auto mb-16">
-            <h2 className="text-4xl md:text-5xl font-bold mb-4 text-balance">Simple, transparent pricing</h2>
-            <p className="text-lg text-muted-foreground text-pretty">Choose the plan that fits your business needs</p>
+            <h2 className="text-4xl md:text-5xl font-bold mb-4 text-balance">
+              Simple, transparent pricing
+            </h2>
+            <p className="text-lg text-muted-foreground text-pretty">
+              Choose the plan that fits your business needs
+            </p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto">
@@ -364,7 +380,9 @@ export default function LandingPage() {
       {/* CTA Section */}
       <section className="py-20 px-6">
         <div className="max-w-4xl mx-auto text-center">
-          <h2 className="text-4xl md:text-5xl font-bold mb-6 text-balance">Ready to transform your finances?</h2>
+          <h2 className="text-4xl md:text-5xl font-bold mb-6 text-balance">
+            Ready to transform your finances?
+          </h2>
           <p className="text-xl text-muted-foreground mb-8 text-pretty">
             Join thousands of businesses managing their finances with confidence
           </p>
@@ -375,7 +393,12 @@ export default function LandingPage() {
                 <ArrowRight className="ml-2 w-4 h-4" />
               </Link>
             </Button>
-            <Button size="lg" variant="outline" className="rounded-full h-12 px-8 text-base bg-transparent" asChild>
+            <Button 
+              size="lg" 
+              variant="outline" 
+              className="rounded-full h-12 px-8 text-base bg-transparent" 
+              asChild
+            >
               <Link href="#features">Learn More</Link>
             </Button>
           </div>
