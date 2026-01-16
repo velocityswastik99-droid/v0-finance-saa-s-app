@@ -70,7 +70,7 @@ export default function LoginPage() {
             <span className="text-xl font-bold">Finflow</span>
           </Link>
           <h1 className="text-2xl font-bold">Welcome back</h1>
-          <p className="text-sm text-muted-foreground mt-1">Sign in to continue to your dashboard</p>
+          <p className="text-sm text-muted-foreground mt-1">Sign in to continue to your finflow</p>
         </div>
 
         {/* Compact Card */}
