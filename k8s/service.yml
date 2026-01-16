@@ -1,0 +1,13 @@
+kind: Service
+apiVersion: v1
+metadata:
+  name: finance-app-service
+  namespace: finance-namespace
+spec:
+  selector:
+    app: finance-k8s
+  ports:
+    - protocol: TCP
+      port: 3000
+      targetPort: 3000
+  type: ClusterIP

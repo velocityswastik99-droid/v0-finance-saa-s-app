@@ -1,0 +1,22 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: finance-k8s-deployment
+  namespace: finance-namespace
+  labels:
+    app: finance-k8s
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: finance-k8s
+  template:
+    metadata:
+      labels:
+        app: finance-k8s
+    spec:
+      containers:
+      - name: finance-k8s
+        image: velocity9/saasfinance9:v1
+        ports:
+        - containerPort: 3000
