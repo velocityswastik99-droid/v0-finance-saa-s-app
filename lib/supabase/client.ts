@@ -7,10 +7,15 @@ export function createBrowserClient() {
     return supabaseClient
   }
 
-  supabaseClient = createBrowserClientSSR(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-  )
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+
+  if (!url || !key) {
+    console.error("[v0] Missing Supabase environment variables")
+    throw new Error("Supabase configuration is missing. Please check your environment variables.")
+  }
+
+  supabaseClient = createBrowserClientSSR(url, key)
 
   return supabaseClient
 }

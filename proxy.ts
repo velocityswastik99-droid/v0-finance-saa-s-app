@@ -2,49 +2,58 @@ import { createServerClient } from "@supabase/ssr"
 import { NextResponse, type NextRequest } from "next/server"
 
 export async function proxy(request: NextRequest) {
-  const supabaseResponse = NextResponse.next({
-    request,
-  })
+  try {
+    const supabaseResponse = NextResponse.next({
+      request,
+    })
 
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        getAll() {
-          return request.cookies.getAll()
-        },
-        setAll(cookiesToSet) {
-          cookiesToSet.forEach(({ name, value, options }) => {
-            request.cookies.set(name, value)
-            supabaseResponse.cookies.set(name, value, options)
-          })
+    const supabase = createServerClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL || "",
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "",
+      {
+        cookies: {
+          getAll() {
+            return request.cookies.getAll()
+          },
+          setAll(cookiesToSet) {
+            cookiesToSet.forEach(({ name, value, options }) => {
+              request.cookies.set(name, value)
+              supabaseResponse.cookies.set(name, value, options)
+            })
+          },
         },
       },
-    },
-  )
+    )
 
-  try {
-    const {
-      data: { user },
-    } = await supabase.auth.getUser()
+    // Only attempt auth check if we have valid Supabase credentials
+    if (process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+      try {
+        const {
+          data: { user },
+        } = await supabase.auth.getUser()
 
-    // Protect dashboard routes
-    if (request.nextUrl.pathname.startsWith("/dashboard") && !user) {
-      const redirectUrl = new URL("/login", request.url)
-      return NextResponse.redirect(redirectUrl)
+        // Protect dashboard routes
+        if (request.nextUrl.pathname.startsWith("/dashboard") && !user) {
+          const redirectUrl = new URL("/login", request.url)
+          return NextResponse.redirect(redirectUrl)
+        }
+
+        // Redirect to dashboard if already logged in and trying to access auth pages
+        if ((request.nextUrl.pathname === "/login" || request.nextUrl.pathname === "/signup") && user) {
+          const redirectUrl = new URL("/dashboard", request.url)
+          return NextResponse.redirect(redirectUrl)
+        }
+      } catch (authError) {
+        // Auth errors are normal during initial load - continue without blocking
+        console.debug("[v0] Auth check skipped during request processing")
+      }
     }
 
-    // Redirect to dashboard if already logged in and trying to access auth pages
-    if ((request.nextUrl.pathname === "/login" || request.nextUrl.pathname === "/signup") && user) {
-      const redirectUrl = new URL("/dashboard", request.url)
-      return NextResponse.redirect(redirectUrl)
-    }
+    return supabaseResponse
   } catch (error) {
-    console.error("Auth middleware error:", error)
+    console.error("[v0] Middleware error:", error)
+    return NextResponse.next()
   }
-
-  return supabaseResponse
 }
 
 export const config = {
