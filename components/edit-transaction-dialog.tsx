@@ -101,7 +101,7 @@ export function EditTransactionDialog({ transaction, onUpdate }: EditTransaction
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="ghost" size="sm" className="gap-2">
+        <Button variant="outline" size="sm" className="gap-2 bg-transparent hover:bg-muted">
           <Edit className="w-4 h-4" />
           Edit
         </Button>
