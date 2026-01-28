@@ -29,34 +29,50 @@ export function AddInvoiceDialog() {
     e.preventDefault()
     setLoading(true)
 
-    const formData = new FormData(e.currentTarget)
-    const supabase = getSupabaseBrowserClient()
+    try {
+      const formData = new FormData(e.currentTarget)
+      const supabase = getSupabaseBrowserClient()
 
-    const {
-      data: { user },
-    } = await supabase.auth.getUser()
-    if (!user) return
+      const {
+        data: { user },
+      } = await supabase.auth.getUser()
+      if (!user) {
+        alert("You must be logged in to create an invoice")
+        setLoading(false)
+        return
+      }
 
-    // Generate invoice number
-    const invoiceNumber = `INV-${Date.now().toString().slice(-8)}`
+      // Generate invoice number
+      const invoiceNumber = `INV-${Date.now().toString().slice(-8)}`
 
-    const { error } = await supabase.from("invoices").insert({
-      user_id: user.id,
-      invoice_number: invoiceNumber,
-      client_name: formData.get("client_name") as string,
-      client_email: formData.get("client_email") as string,
-      amount: Number.parseFloat(formData.get("amount") as string),
-      issue_date: formData.get("issue_date") as string,
-      due_date: formData.get("due_date") as string,
-      status: formData.get("status") as string,
-      description: formData.get("description") as string,
-    })
+      const { error } = await supabase.from("invoices").insert([
+        {
+          user_id: user.id,
+          invoice_number: invoiceNumber,
+          client_name: formData.get("client_name") as string,
+          client_email: formData.get("client_email") as string,
+          amount: Number.parseFloat(formData.get("amount") as string),
+          issue_date: formData.get("issue_date") as string,
+          due_date: formData.get("due_date") as string,
+          status: formData.get("status") as string,
+          description: formData.get("description") as string,
+        },
+      ])
 
-    setLoading(false)
+      if (error) {
+        console.error("[v0] Invoice insert error:", error.message)
+        alert(`Failed to create invoice: ${error.message}`)
+        setLoading(false)
+        return
+      }
 
-    if (!error) {
       setOpen(false)
       router.refresh()
+    } catch (err) {
+      console.error("[v0] Invoice submission error:", err)
+      alert("An unexpected error occurred while creating the invoice")
+    } finally {
+      setLoading(false)
     }
   }
 

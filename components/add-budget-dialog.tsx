@@ -28,42 +28,50 @@ async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
   e.preventDefault()
   setLoading(true)
 
-  const formData = new FormData(e.currentTarget)
-  const supabase = getSupabaseBrowserClient()
+  try {
+    const formData = new FormData(e.currentTarget)
+    const supabase = getSupabaseBrowserClient()
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
 
-  if (!user) {
-    setLoading(false)
-    return
-  }
+    if (!user) {
+      alert("You must be logged in to create a budget")
+      setLoading(false)
+      return
+    }
 
-  // Calculate monthly range
-  const now = new Date()
-  const startDate = new Date(now.getFullYear(), now.getMonth(), 1)
-  const endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0)
+    // Calculate monthly range
+    const now = new Date()
+    const startDate = new Date(now.getFullYear(), now.getMonth(), 1)
+    const endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0)
 
-  const { error } = await supabase.from("budgets").insert({
-    user_id: user.id,
-    category: formData.get("category") as string,
-    amount: Number(formData.get("budget_limit")), // ✅ correct column
-    period: formData.get("period") as string,     // "monthly"
-    start_date: startDate.toISOString().split("T")[0],
-    end_date: endDate.toISOString().split("T")[0],
-  })
+    const budgetData = {
+      user_id: user.id,
+      category: formData.get("category") as string,
+      amount: Number(formData.get("budget_limit")),
+      period: formData.get("period") as string,
+      start_date: startDate.toISOString().split("T")[0],
+      end_date: endDate.toISOString().split("T")[0],
+    }
 
-  setLoading(false)
+    const { error } = await supabase.from("budgets").insert([budgetData])
 
-  if (!error) {
+    if (error) {
+      console.error("[v0] Budget insert error:", error.message, error.details)
+      alert(`Failed to create budget: ${error.message}`)
+      setLoading(false)
+      return
+    }
+
     setOpen(false)
     router.refresh()
-  } else {
-    console.error("Insert budget error:", error)
+  } catch (err) {
+    console.error("[v0] Budget submission error:", err)
+    alert("An unexpected error occurred while creating the budget")
+    setLoading(false)
   }
-  // console.log("Budget row:", budget)
-
 }
 
   return (

@@ -29,30 +29,46 @@ export function AddTransactionDialog() {
     e.preventDefault()
     setLoading(true)
 
-    const formData = new FormData(e.currentTarget)
-    const supabase = getSupabaseBrowserClient()
+    try {
+      const formData = new FormData(e.currentTarget)
+      const supabase = getSupabaseBrowserClient()
 
-    const {
-      data: { user },
-    } = await supabase.auth.getUser()
-    if (!user) return
+      const {
+        data: { user },
+      } = await supabase.auth.getUser()
+      if (!user) {
+        alert("You must be logged in to add a transaction")
+        setLoading(false)
+        return
+      }
 
-    const { error } = await supabase.from("transactions").insert({
-      user_id: user.id,
-      name: formData.get("name") as string,
-      description: formData.get("description") as string,
-      amount: Number.parseFloat(formData.get("amount") as string),
-      type: formData.get("type") as string,
-      category: formData.get("category") as string,
-      date: formData.get("date") as string,
-      status: formData.get("status") as string,
-    })
+      const { error } = await supabase.from("transactions").insert([
+        {
+          user_id: user.id,
+          name: formData.get("name") as string,
+          description: formData.get("description") as string,
+          amount: Number.parseFloat(formData.get("amount") as string),
+          type: formData.get("type") as string,
+          category: formData.get("category") as string,
+          date: formData.get("date") as string,
+          status: formData.get("status") as string,
+        },
+      ])
 
-    setLoading(false)
+      if (error) {
+        console.error("[v0] Transaction insert error:", error.message)
+        alert(`Failed to add transaction: ${error.message}`)
+        setLoading(false)
+        return
+      }
 
-    if (!error) {
       setOpen(false)
       router.refresh()
+    } catch (err) {
+      console.error("[v0] Transaction submission error:", err)
+      alert("An unexpected error occurred while adding the transaction")
+    } finally {
+      setLoading(false)
     }
   }
 
