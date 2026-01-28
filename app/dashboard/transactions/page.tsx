@@ -21,6 +21,7 @@ import {
   Loader2,
 } from "lucide-react"
 import { AddTransactionDialog } from "@/components/add-transaction-dialog"
+import { EditTransactionDialog } from "@/components/edit-transaction-dialog"
 
 export default function TransactionsPage() {
   const { transactions, isLoading } = useTransactions()
@@ -141,6 +142,7 @@ export default function TransactionsPage() {
                       <th className="text-left p-4 text-sm font-medium text-muted-foreground">Date</th>
                       <th className="text-left p-4 text-sm font-medium text-muted-foreground">Status</th>
                       <th className="text-right p-4 text-sm font-medium text-muted-foreground">Amount</th>
+                      <th className="text-right p-4 text-sm font-medium text-muted-foreground">Actions</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -201,6 +203,9 @@ export default function TransactionsPage() {
                             {transaction.type === "income" ? "+" : "-"}
                             {formatCurrency(Number(transaction.amount), currency)}
                           </span>
+                        </td>
+                        <td className="p-4 text-right">
+                          <EditTransactionDialog transaction={transaction} />
                         </td>
                       </tr>
                     ))}

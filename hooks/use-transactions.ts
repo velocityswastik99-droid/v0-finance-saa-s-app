@@ -56,5 +56,44 @@ export function useTransactions() {
     }
   }
 
-  return { transactions, isLoading, error, refetch: fetchTransactions }
+  async function updateTransaction(
+    id: string,
+    updates: {
+      name?: string
+      description?: string
+      amount?: number
+      type?: string
+      category?: string
+      date?: string
+      status?: string
+    },
+  ) {
+    try {
+      const supabase = getSupabaseBrowserClient()
+      const { error } = await supabase.from("transactions").update(updates).eq("id", id)
+
+      if (error) throw error
+      await fetchTransactions()
+      return { success: true }
+    } catch (err) {
+      console.error("[v0] Transaction update error:", err)
+      return { success: false, error: err instanceof Error ? err.message : "Failed to update transaction" }
+    }
+  }
+
+  async function deleteTransaction(id: string) {
+    try {
+      const supabase = getSupabaseBrowserClient()
+      const { error } = await supabase.from("transactions").delete().eq("id", id)
+
+      if (error) throw error
+      await fetchTransactions()
+      return { success: true }
+    } catch (err) {
+      console.error("[v0] Transaction delete error:", err)
+      return { success: false, error: err instanceof Error ? err.message : "Failed to delete transaction" }
+    }
+  }
+
+  return { transactions, isLoading, error, refetch: fetchTransactions, updateTransaction, deleteTransaction }
 }
